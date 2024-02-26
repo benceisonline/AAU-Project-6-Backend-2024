@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '!README.md'
+
+  workflow_dispatch:
+  
+jobs:
+  create_conda_environment:
+    runs-on: ubuntu-latest
+    name: Create Conda Environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12.2'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+  lint_code:
+    runs-on: ubuntu-latest
+    name: Lint Code
+    needs: create_conda_environment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Lint Python code
+        run: flake8 .
