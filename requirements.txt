@@ -1,0 +1,6 @@
+mlflow
+numpy
+pandas
+torch
+fastapi
+uvicorn
