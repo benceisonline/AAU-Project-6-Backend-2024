@@ -8,10 +8,24 @@ on:
       - main
     paths:
       - '!README.md'
+  pull_request_review:
+    types: [submitted]
 
   workflow_dispatch:
   
 jobs:
+  check_pull_request_review:
+    runs-on: ubuntu-latest
+    name: Check Pull Request Review
+    steps:
+      - name: Check if PR is approved
+        run: |
+          APPROVED=$(jq -r '.review.state' "$GITHUB_EVENT_PATH")
+          if [ "$APPROVED" != "approved" ]; then
+            echo "Pull request not approved. Exiting with failure."
+            exit 1
+          fi
+
   create_conda_environment:
     runs-on: ubuntu-latest
     name: Create Conda Environment
