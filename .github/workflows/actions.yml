@@ -19,12 +19,22 @@ jobs:
     name: Check Pull Request Review
     steps:
       - name: Check if PR is approved
+        if: github.event.pull_request.base.ref == 'main'
         run: |
           APPROVED=$(jq -r '.review.state' "$GITHUB_EVENT_PATH")
           if [ "$APPROVED" != "approved" ]; then
             echo "Pull request not approved. Exiting with failure."
             exit 1
           fi
+      
+  block_pull_request_merge:
+    runs-on: ubuntu-latest
+    name: Block Pull Request Merge
+    needs: check_pull_request_review
+    if: failure()
+    steps:
+      - name: Fail workflow
+        run: exit 1
 
   create_conda_environment:
     runs-on: ubuntu-latest

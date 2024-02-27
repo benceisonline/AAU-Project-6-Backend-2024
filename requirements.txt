@@ -4,3 +4,4 @@ pandas
 torch
 fastapi
 uvicorn
+flake8
