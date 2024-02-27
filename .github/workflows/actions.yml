@@ -8,8 +8,6 @@ on:
       - main
     paths:
       - '!README.md'
-  pull_request_review:
-    types: [submitted]
 
   workflow_dispatch:
   
@@ -40,4 +38,4 @@ jobs:
         uses: actions/checkout@v2
       
       - name: Lint Python code
-        run: flake8 .
+        run: flake8
