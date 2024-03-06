@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# #Shell
+# ## Shell
 
-# In[1]:
+# In[2]:
 
 
 get_ipython().run_line_magic('pip', 'install pytorch_lightning')
@@ -12,9 +12,9 @@ get_ipython().run_line_magic('pip', 'install pandas')
 get_ipython().run_line_magic('pip', 'install nbconvert')
 
 
-# #Imports
+# ## Imports
 
-# In[2]:
+# In[3]:
 
 
 import numpy as np # linear algebra
@@ -28,9 +28,9 @@ import os
 from collections import Counter
 
 
-# #Import for TensorBoard
+# ## Import for TensorBoard
 
-# In[3]:
+# In[4]:
 
 
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -38,9 +38,9 @@ from pytorch_lightning.loggers import TensorBoardLogger
 logger = TensorBoardLogger("tb_logs", name="my_model")
 
 
-# #Data preprocessing
+# ## Data preprocessing
 
-# In[4]:
+# In[5]:
 
 
 raw_behaviour = pd.read_csv(
@@ -52,9 +52,9 @@ print(f"The dataset consist of {len(raw_behaviour)} number of interactions.")
 raw_behaviour.head()
 
 
-# #Indexize users
+# ## Indexize users
 
-# In[5]:
+# In[6]:
 
 
 # Indexize users
@@ -68,9 +68,9 @@ print(f"We have {len(user2ind)} unique users in the dataset")
 raw_behaviour['userIdx'] = raw_behaviour['userId'].map(lambda x: user2ind.get(x,0))
 
 
-# #Load article data
+# ## Load article data
 
-# In[6]:
+# In[7]:
 
 
 news = pd.read_csv(
@@ -85,9 +85,9 @@ item2ind = {itemid : idx for idx, itemid in ind2item.items()}
 news.head()
 
 
-# #Indexize click history field
+# ## Indexize click history field
 
-# In[7]:
+# In[8]:
 
 
 # Indexize click history field
@@ -99,9 +99,9 @@ raw_behaviour['click_history_idx'] = raw_behaviour.click_history.map(lambda s:  
 raw_behaviour.head()
 
 
-# #Collect one click and no click impressions
+# ## Collect one click and no click impressions
 
-# In[8]:
+# In[9]:
 
 
 # collect one click and one no-click from impressions:
@@ -122,15 +122,15 @@ raw_behaviour['noclicks'] = raw_behaviour['noclicks'].map(lambda list_of_strings
 raw_behaviour['click'] = raw_behaviour['click'].map(lambda x: item2ind.get(x,0))
 
 
-# In[9]:
+# In[10]:
 
 
 raw_behaviour.head()
 
 
-# #Convert timestamp value to hours since epoch
+# ## Convert timestamp value to hours since epoch
 
-# In[10]:
+# In[11]:
 
 
 raw_behaviour['epochhrs'] = pd.to_datetime(raw_behaviour['timestamp']).values.astype(np.int64)/(1e6)/1000/3600
@@ -138,15 +138,15 @@ raw_behaviour['epochhrs'] = raw_behaviour['epochhrs'].round()
 raw_behaviour[['click','epochhrs']].groupby("click").min("epochhrs").reset_index()
 
 
-# In[11]:
+# In[12]:
 
 
 raw_behaviour
 
 
-# #Modeling
+# ## Modeling
 
-# In[12]:
+# In[13]:
 
 
 raw_behaviour['noclick'] = raw_behaviour['noclicks'].map(lambda x : x[0])
@@ -154,7 +154,7 @@ behaviour = raw_behaviour[['epochhrs','userIdx','click_history_idx','noclick','c
 behaviour.head()
 
 
-# In[13]:
+# In[14]:
 
 
 # Let us use the last 10pct of the data as our validation data:
@@ -163,7 +163,7 @@ train = behaviour[behaviour['epochhrs']< test_time_th]
 valid =  behaviour[behaviour['epochhrs']>= test_time_th]
 
 
-# In[14]:
+# In[15]:
 
 
 class MindDataset(Dataset):
@@ -182,7 +182,7 @@ class MindDataset(Dataset):
         return {key: val[idx] for key, val in self.data.items()}
 
 
-# In[15]:
+# In[16]:
 
 
 # Build datasets and dataloaders of train and validation dataframes:
@@ -195,14 +195,14 @@ valid_loader = DataLoader(ds_valid, batch_size=bs, shuffle=False)
 batch = next(iter(train_loader))
 
 
-# In[16]:
+# In[17]:
 
 
 batch["noclick"]
 
 
-# #Model
-# ##Framework
+# ## Model
+# ### Framework
 # 
 # We will use pytorch-lightning to define and train our model. It is a high-level framework (similar to fastAI) but with a slightly different way of defining things. It is my personal go-to framework and is very flexible. For more information, see https://pytorch-lightning.readthedocs.io/.
 # The model
@@ -210,7 +210,7 @@ batch["noclick"]
 # We assume that each interaction goes as follow: the user is presented with two items: the click and no-click item. After the user reviewed both items, she will choose the most relevant one. This can be modeled as a categorical distirbution with two options (yes, you could do binomial). There is a loss function in pytorch for this already, called the F.cross_entropy that we will use.
 # 
 
-# In[17]:
+# In[18]:
 
 
 # Build a matrix factorization model
@@ -259,24 +259,24 @@ class NewsMF(pl.LightningModule):
 mf_model = NewsMF(num_users=len(ind2user)+1, num_items = len(ind2item)+1)
 
 
-# In[18]:
+# In[19]:
 
 
 trainer = pl.Trainer(max_epochs=10,logger=logger)
 trainer.fit(model=mf_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-# #Sense check
+# ## Sense check
 
-# In[19]:
+# In[20]:
 
 
 USER_ID = 2350 # Random user id
 
 
-# #Suggested items
+# ## Suggested items
 
-# In[20]:
+# In[21]:
 
 
 # Create item_ids and user ids list
@@ -293,9 +293,9 @@ filters = [ind2item[ix.item()] for ix in top_index]
 news[news["itemId"].isin(filters)]
 
 
-# #Historical items
+# ## Historical items
 
-# In[21]:
+# In[22]:
 
 
 click_ids = behaviour[behaviour["userIdx"]==USER_ID]["click"].values
@@ -306,9 +306,9 @@ click_ids = [ll(each) for each in click_ids]
 news[news["itemId"].isin(click_ids)]
 
 
-# #Tensorboard
+# ## Tensorboard
 
-# In[22]:
+# In[23]:
 
 
 # Load the extension and start TensorBoard
@@ -317,9 +317,9 @@ get_ipython().run_line_magic('load_ext', 'tensorboard')
 get_ipython().run_line_magic('tensorboard', '--logdir tb_logs')
 
 
-# #Saving the model
+# ## Saving the model
 
-# In[23]:
+# In[24]:
 
 
 # Specify the relative directory path
@@ -336,9 +336,9 @@ model_save_path = os.path.join(directory_path, "collaborative_filtering_model.pt
 torch.save(mf_model.state_dict(), model_save_path)
 
 
-# #Loading and running the model
+# ## Loading and running the model
 
-# In[24]:
+# In[25]:
 
 
 # Load the state dictionary from the specified directory
@@ -349,7 +349,7 @@ model_load_path = os.path.join("Saved_Model", "collaborative_filtering_model.pth
 loaded_model.load_state_dict(torch.load(model_load_path))
 
 
-# In[25]:
+# In[26]:
 
 
 # Specify the user ID for prediction
@@ -381,15 +381,15 @@ print(recommended_items)
 
 # #Convert to Python Script (not needed right now but keep as utility)
 
-# In[26]:
+# In[27]:
 
 
 get_ipython().system('python -m nbconvert --to script collab.ipynb')
 
 
-# # Get random user id
+# ## Get random user id
 
-# In[27]:
+# In[28]:
 
 
 random_user_index = np.random.randint(0, len(raw_behaviour))
