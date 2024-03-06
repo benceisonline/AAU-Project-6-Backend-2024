@@ -8,7 +8,7 @@ Download Anaconda from this [link](https://docs.anaconda.com/free/anaconda/insta
 Download Postman from this [link](https://www.postman.com/downloads/) 👷
 
 ## Step 1.5 Add Tensorboard Extension to Visual Studio Code (Optional)
-You can add the extension directly inside VS Code, or by using this [link](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.tensorboard)
+You can add the extension directly inside VS Code, or by using this [link](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.tensorboard) 📊
 
 ## Step 2: Create & Activate Conda Environment
 ```bash
