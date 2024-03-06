@@ -38,4 +38,4 @@ async def get_favicon():
 
 # Run the FastAPI app
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="192.168.1.79", port=8000) # Replace with your IP address

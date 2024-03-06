@@ -24,6 +24,7 @@ pip install -r requirements.txt
 ```
 
 ## Step 4: Local host the API
+Update IP to your local IP address in App.py
 ```bash
 python app.py
 ```
