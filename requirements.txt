@@ -2,6 +2,8 @@ mlflow
 numpy
 pandas
 torch
+pytorch_lightning
+pydantic
 fastapi
 uvicorn
 flake8
