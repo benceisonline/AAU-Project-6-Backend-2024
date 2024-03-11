@@ -31,11 +31,6 @@ def predict(request: PredictionRequest):
 def read_root():
     return {"message": "Welcome to the FastAPI app!"}
 
-# Default route to handle requests to favicon.ico
-@app.get("/favicon.ico")
-async def get_favicon():
-    raise HTTPException(status_code=404, detail="Favicon not found")
-
 # Run the FastAPI app
 if __name__ == "__main__":
     uvicorn.run(app, host="192.168.1.79", port=8000) # Replace with your IP address
