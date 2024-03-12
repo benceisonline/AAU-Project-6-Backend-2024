@@ -3,10 +3,11 @@
 
 # ## Shell
 
-# In[378]:
+# In[31]:
 
 
 get_ipython().run_line_magic('pip', 'install pytorch_lightning')
+get_ipython().run_line_magic('pip', 'install torchmetrics')
 get_ipython().run_line_magic('pip', 'install --upgrade tensorboard')
 get_ipython().run_line_magic('pip', 'install pandas')
 get_ipython().run_line_magic('pip', 'install nbconvert')
@@ -14,7 +15,7 @@ get_ipython().run_line_magic('pip', 'install nbconvert')
 
 # ## Imports
 
-# In[379]:
+# In[32]:
 
 
 import numpy as np # linear algebra
@@ -30,7 +31,7 @@ from collections import Counter
 
 # ## Import for TensorBoard
 
-# In[380]:
+# In[33]:
 
 
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -40,7 +41,7 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 
 # ## Data preprocessing
 
-# In[381]:
+# In[34]:
 
 
 raw_behaviour = pd.read_csv(
@@ -54,7 +55,7 @@ raw_behaviour.head()
 
 # ## Indexize users
 
-# In[382]:
+# In[35]:
 
 
 # Indexize users
@@ -70,7 +71,7 @@ raw_behaviour['userIdx'] = raw_behaviour['userId'].map(lambda x: user2ind.get(x,
 
 # ## Load article data
 
-# In[383]:
+# In[36]:
 
 
 news = pd.read_csv(
@@ -87,7 +88,7 @@ news.head()
 
 # ## Indexize click history field
 
-# In[384]:
+# In[37]:
 
 
 # Indexize click history field
@@ -101,7 +102,7 @@ raw_behaviour.head()
 
 # ## Collect one click and no click impressions
 
-# In[385]:
+# In[38]:
 
 
 # collect one click and one no-click from impressions:
@@ -122,7 +123,7 @@ raw_behaviour['noclicks'] = raw_behaviour['noclicks'].map(lambda list_of_strings
 raw_behaviour['click'] = raw_behaviour['click'].map(lambda x: item2ind.get(x,0))
 
 
-# In[ ]:
+# In[39]:
 
 
 raw_behaviour.head()
@@ -130,7 +131,7 @@ raw_behaviour.head()
 
 # ## Convert timestamp value to hours since epoch
 
-# In[ ]:
+# In[40]:
 
 
 raw_behaviour['epochhrs'] = pd.to_datetime(raw_behaviour['timestamp']).values.astype(np.int64)/(1e6)/1000/3600
@@ -138,7 +139,7 @@ raw_behaviour['epochhrs'] = raw_behaviour['epochhrs'].round()
 raw_behaviour[['click','epochhrs']].groupby("click").min("epochhrs").reset_index()
 
 
-# In[ ]:
+# In[41]:
 
 
 raw_behaviour
@@ -146,7 +147,7 @@ raw_behaviour
 
 # ## Modeling
 
-# In[ ]:
+# In[42]:
 
 
 raw_behaviour['noclick'] = raw_behaviour['noclicks'].map(lambda x : x[0])
@@ -154,7 +155,7 @@ behaviour = raw_behaviour[['epochhrs','userIdx','click_history_idx','noclick','c
 behaviour.head()
 
 
-# In[ ]:
+# In[43]:
 
 
 # Let us use the last 10pct of the data as our validation data:
@@ -163,7 +164,7 @@ train = behaviour[behaviour['epochhrs']< test_time_th]
 valid =  behaviour[behaviour['epochhrs']>= test_time_th]
 
 
-# In[ ]:
+# In[44]:
 
 
 class MindDataset(Dataset):
@@ -182,7 +183,7 @@ class MindDataset(Dataset):
         return {key: val[idx] for key, val in self.data.items()}
 
 
-# In[ ]:
+# In[45]:
 
 
 # Build datasets and dataloaders of train and validation dataframes:
@@ -195,7 +196,7 @@ valid_loader = DataLoader(ds_valid, batch_size=bs, shuffle=False)
 batch = next(iter(train_loader))
 
 
-# In[ ]:
+# In[46]:
 
 
 batch["noclick"]
@@ -210,7 +211,7 @@ batch["noclick"]
 # We assume that each interaction goes as follow: the user is presented with two items: the click and no-click item. After the user reviewed both items, she will choose the most relevant one. This can be modeled as a categorical distirbution with two options (yes, you could do binomial). There is a loss function in pytorch for this already, called the F.cross_entropy that we will use.
 # 
 
-# In[ ]:
+# In[47]:
 
 
 import torch
@@ -218,6 +219,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
+from torchmetrics.classification import BinaryF1Score, BinaryAUROC
 
 class NewsMF(pl.LightningModule):
     def __init__(self, num_users, num_items, dim=10):
@@ -225,8 +227,17 @@ class NewsMF(pl.LightningModule):
         self.dim = dim
         self.useremb = nn.Embedding(num_embeddings=num_users, embedding_dim=dim)
         self.itememb = nn.Embedding(num_embeddings=num_items, embedding_dim=dim)
-        self.validation_step_outputs = []
-        self.train_step_outputs = []
+        
+        # BinaryF1Score metric
+        self.f1_metric = BinaryF1Score()
+        self.train_step_f1_outputs = []
+        self.validation_step_f1_outputs = []
+
+        # BinaryAUROC metric
+        self.binary_auroc = BinaryAUROC()
+        self.train_step_auroc_outputs = []
+        self.validation_step_auroc_outputs = []
+
 
     def forward(self, user, item):
         batch_size = user.size(0)
@@ -240,102 +251,116 @@ class NewsMF(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         batch_size = batch['userIdx'].size(0)
 
+        # Compute loss as cross entropy (categorical distribution between the clicked and the no-clicked item)
         score_click = self.forward(batch['userIdx'], batch['click'])
         score_noclick = self.forward(batch['userIdx'], batch['noclick'])
 
-        # Compute F1-score for clicked items
-        f1_click = self.calculate_f1(score_click, torch.ones_like(batch['click']))
-
-        # Compute F1-score for non-clicked items
-        f1_noclick = self.calculate_f1(score_noclick, torch.zeros_like(batch['noclick']))
+        loss = F.cross_entropy(input=torch.cat((score_click, score_noclick), dim=1),
+                               target=torch.zeros(batch_size, device=score_click.device).long())
+        
+        # Compute F1-score
+        f1_click = self.f1_metric(score_click.squeeze(), torch.ones_like(batch['click']))
+        f1_noclick = self.f1_metric(score_noclick.squeeze(), torch.zeros_like(batch['noclick']))
 
         # Average F1-scores
         f1 = (f1_click + f1_noclick) / 2.0
 
-        self.train_step_outputs.append(f1)
+        self.train_step_f1_outputs.append(f1)
 
-        # Compute loss as cross entropy (categorical distribution between the clicked and the no-clicked item)
-        loss = F.cross_entropy(input=torch.cat((score_click, score_noclick), dim=1),
-                               target=torch.zeros(batch_size, device=score_click.device).long())
+        # Calculate Binary AUROC
+        binary_auroc_score = self.binary_auroc(torch.cat((score_click, score_noclick), dim=1),
+                                                torch.cat((torch.ones_like(batch['click']),
+                                                           torch.zeros_like(batch['noclick'])))
+                                               )
+        
+        self.train_step_auroc_outputs.append(binary_auroc_score)
 
-        return {'loss': loss, 'f1': f1}
+        # Log metrics to TensorBoard
+        self.log('train_loss', loss)
+        self.log('train_f1', f1)
+        self.log('train_auroc', binary_auroc_score)
+
+        return {'loss': loss, 'f1': f1, 'auroc': binary_auroc_score}
     
     def on_train_epoch_end(self):
-        epoch_average_f1 = torch.stack(self.train_step_outputs).mean()
+        epoch_average_f1 = torch.stack(self.train_step_f1_outputs).mean()
         print(f'Epoch {self.current_epoch}: Training F1 Score: {epoch_average_f1.item()}')
-        self.log("train_epoch_average", epoch_average_f1)
-        self.train_step_outputs.clear()  # free memory
+        self.log("train_epoch_average_f1", epoch_average_f1)
+        self.train_step_f1_outputs.clear()  # free memory
+
+        epoch_average_auroc = torch.stack(self.train_step_auroc_outputs).mean()
+        print(f'Epoch {self.current_epoch}: Training AUROC Score: {epoch_average_auroc.item()}')
+        self.log("train_epoch_average_auroc", epoch_average_auroc)
+        self.validation_step_auroc_outputs.clear()  # free memory
 
     def validation_step(self, batch, batch_idx):
+        # Compute loss as cross-entropy (categorical distribution between clicked and non-clicked items)
         score_click = self.forward(batch['userIdx'], batch['click'])
         score_noclick = self.forward(batch['userIdx'], batch['noclick'])
 
-        f1_click = self.calculate_f1(score_click, torch.ones_like(batch['click']))
-        f1_noclick = self.calculate_f1(score_noclick, torch.zeros_like(batch['noclick']))
-
-        f1 = (f1_click + f1_noclick) / 2.0
-
-        # Compute loss as cross-entropy (categorical distribution between clicked and non-clicked items)
         loss = F.cross_entropy(input=torch.cat((score_click, score_noclick), dim=1),
                             target=torch.zeros(batch['userIdx'].size(0), device=score_click.device).long())
+        
+        # F1 Score
+        f1_click = self.f1_metric(score_click.squeeze(), torch.ones_like(batch['click']))
+        f1_noclick = self.f1_metric(score_noclick.squeeze(), torch.zeros_like(batch['noclick']))
+        f1 = (f1_click + f1_noclick) / 2.0 # Average F1-scores
 
-        results = {'loss': loss, 'f1': f1}
+        self.validation_step_f1_outputs.append(f1)
+
+        # Calculate Binary AUROC
+        binary_auroc_score = self.binary_auroc(torch.cat((score_click, score_noclick), dim=1),
+                                                torch.cat((torch.ones_like(batch['click']),
+                                                           torch.zeros_like(batch['noclick'])))
+                                               )
         
-        self.validation_step_outputs.append(f1)
-        
-        return results
+        self.validation_step_auroc_outputs.append(binary_auroc_score)
+
+        # Log metrics to TensorBoard
+        self.log('val_loss', loss)
+        self.log('val_f1', f1)
+        self.log('val_auroc', binary_auroc_score)
+                
+        return {'loss': loss, 'f1': f1, 'auroc': binary_auroc_score}
 
     def on_validation_epoch_end(self):
-        epoch_average_f1 = torch.stack(self.validation_step_outputs).mean()
+        epoch_average_f1 = torch.stack(self.validation_step_f1_outputs).mean()
         print(f'Epoch {self.current_epoch}: Validation F1 Score: {epoch_average_f1.item()}')
-        self.log("validation_epoch_average", epoch_average_f1)
-        self.validation_step_outputs.clear()  # free memory
+        self.log("validation_epoch_average_f1", epoch_average_f1)
+        self.validation_step_f1_outputs.clear()  # free memory
 
+        epoch_average_auroc = torch.stack(self.validation_step_auroc_outputs).mean()
+        print(f'Epoch {self.current_epoch}: Validation AUROC Score: {epoch_average_auroc.item()}')
+        self.log("validation_epoch_average_auroc", epoch_average_auroc)
+        self.validation_step_auroc_outputs.clear()  # free memory
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
-    def calculate_f1(self, raw_predictions, targets, threshold=0.5):
-        # Apply threshold to convert raw scores into binary predictions
-        binary_predictions = (raw_predictions >= threshold).float()
-
-        tp = torch.sum(targets * binary_predictions).float()
-        fp = torch.sum((1 - targets) * binary_predictions).float()
-        fn = torch.sum(targets * (1 - binary_predictions)).float()
-
-        precision = tp / (tp + fp + 1e-10)
-        recall = tp / (tp + fn + 1e-10)
-
-        f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
-
-        return f1
-
 # Instantiate the model
 mf_model = NewsMF(num_users=len(ind2user)+1, num_items=len(ind2item)+1)
 
 
-# In[ ]:
+# In[48]:
 
 
 trainer = pl.Trainer(max_epochs=10,logger=logger)
 trainer.fit(model=mf_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-# In[ ]:
+# In[49]:
 
 
-train_logs = trainer.logged_metrics
-val_logs = trainer.callback_metrics
+logs = trainer.logged_metrics
 
 # Print or inspect the logs
-print("Training logs:", train_logs)
-print("Validation logs:", val_logs)
+print("Training and validation logs:", logs)
 
 
 # ## Sense check
 
-# In[ ]:
+# In[50]:
 
 
 USER_ID = 2350 # Random user id
@@ -343,7 +368,7 @@ USER_ID = 2350 # Random user id
 
 # ## Suggested items
 
-# In[ ]:
+# In[51]:
 
 
 # Create item_ids and user ids list
@@ -362,7 +387,7 @@ news[news["itemId"].isin(filters)]
 
 # ## Historical items
 
-# In[ ]:
+# In[52]:
 
 
 click_ids = behaviour[behaviour["userIdx"]==USER_ID]["click"].values
@@ -375,7 +400,7 @@ news[news["itemId"].isin(click_ids)]
 
 # ## Tensorboard
 
-# In[ ]:
+# In[67]:
 
 
 # Load the extension and start TensorBoard
@@ -386,7 +411,7 @@ get_ipython().run_line_magic('tensorboard', '--logdir tb_logs')
 
 # ## Saving the model
 
-# In[ ]:
+# In[54]:
 
 
 # Specify the relative directory path
@@ -405,7 +430,7 @@ torch.save(mf_model.state_dict(), model_save_path)
 
 # ## Loading and running the model
 
-# In[ ]:
+# In[55]:
 
 
 # Load the state dictionary from the specified directory
@@ -416,7 +441,7 @@ model_load_path = os.path.join("Saved_Model", "collaborative_filtering_model.pth
 loaded_model.load_state_dict(torch.load(model_load_path))
 
 
-# In[ ]:
+# In[56]:
 
 
 # Specify the user ID for prediction
@@ -448,7 +473,7 @@ print(recommended_items)
 
 # #Convert to Python Script (not needed right now but keep as utility)
 
-# In[ ]:
+# In[57]:
 
 
 get_ipython().system('python -m nbconvert --to script collab.ipynb')
@@ -456,7 +481,7 @@ get_ipython().system('python -m nbconvert --to script collab.ipynb')
 
 # ## Get random user id
 
-# In[ ]:
+# In[58]:
 
 
 random_user_index = np.random.randint(0, len(raw_behaviour))
