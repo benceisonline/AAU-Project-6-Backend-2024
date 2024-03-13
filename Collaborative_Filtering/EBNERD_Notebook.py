@@ -3,7 +3,7 @@
 
 # ### Shell
 
-# In[22]:
+# In[46]:
 
 
 get_ipython().run_line_magic('pip', 'install pytorch_lightning')
@@ -15,7 +15,7 @@ get_ipython().run_line_magic('pip', 'install nbconvert')
 
 # ### Imports
 
-# In[23]:
+# In[47]:
 
 
 import numpy as np # linear algebra
@@ -31,7 +31,7 @@ from collections import Counter
 
 # ### Import for TensorBoard
 
-# In[24]:
+# In[48]:
 
 
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -41,7 +41,7 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 
 # ### Data Preprocessing
 
-# In[25]:
+# In[49]:
 
 
 # Load EBNeRD behaviors dataset for both train and validation
@@ -52,7 +52,7 @@ behaviors = pd.concat([train_behaviour, valid_behaviour], ignore_index=True)
 behaviors.head()
 
 
-# In[26]:
+# In[50]:
 
 
 # Load EBNeRD history dataset for both train and validation
@@ -63,7 +63,7 @@ history = pd.concat([train_history, valid_history], ignore_index=True)
 history.head()
 
 
-# In[27]:
+# In[51]:
 
 
 # Load EBNeRD news dataset
@@ -74,7 +74,7 @@ news.head()
 
 # ### Join history and behaviour tables
 
-# In[28]:
+# In[52]:
 
 
 # Left join on 'user_id'
@@ -86,7 +86,7 @@ behaviour_history_merged.head()
 
 # ### Generate binary labels
 
-# In[29]:
+# In[53]:
 
 
 # Function to create binary labels column
@@ -114,7 +114,7 @@ behaviour_history_merged = create_binary_labels_column(behaviour_history_merged)
 behaviour_history_merged.head()
 
 
-# In[30]:
+# In[54]:
 
 
 # Indexize users for the new dataset
@@ -125,7 +125,7 @@ behaviour_history_merged['userIdx'] = behaviour_history_merged['user_id'].map(la
 print(f"We have {len(user2ind)} unique users in the dataset")
 
 
-# In[31]:
+# In[55]:
 
 
 # Indexize articles for the new dataset
@@ -136,7 +136,7 @@ behaviour_history_merged['articleIdx'] = behaviour_history_merged['article_id'].
 print(f"We have {len(article2ind)} unique articles in the dataset")
 
 
-# In[32]:
+# In[56]:
 
 
 # Split data into train and validation
@@ -145,7 +145,7 @@ train_data = behaviour_history_merged[behaviour_history_merged['impression_time'
 valid_data = behaviour_history_merged[behaviour_history_merged['impression_time'] >= test_time_threshold]
 
 
-# In[33]:
+# In[57]:
 
 
 class EBNeRDMindDataset(Dataset):
@@ -168,7 +168,7 @@ class EBNeRDMindDataset(Dataset):
         }
 
 
-# In[34]:
+# In[58]:
 
 
 # Build datasets and dataloaders for train and validation dataframes
@@ -181,7 +181,7 @@ valid_loader = DataLoader(ds_valid, batch_size=bs, shuffle=False)
 
 # ### Model
 
-# In[35]:
+# In[59]:
 
 
 import torch
@@ -309,13 +309,13 @@ class NewsMF(pl.LightningModule):
         return optimizer
 
 
-# In[36]:
+# In[60]:
 
 
 ebnerd_model = NewsMF(num_users=len(user2ind) + 1, num_items=len(article2ind) + 1)
 
 
-# In[37]:
+# In[61]:
 
 
 # Instantiate the trainer
@@ -325,7 +325,7 @@ trainer = pl.Trainer(max_epochs=10, logger=logger)
 trainer.fit(model=ebnerd_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-# In[38]:
+# In[62]:
 
 
 logs = trainer.logged_metrics
@@ -336,7 +336,7 @@ print("Training and validation logs:", logs)
 
 # ### Prediction test
 
-# In[39]:
+# In[63]:
 
 
 USER_ID = 2350 # Random user id
@@ -356,7 +356,7 @@ news[news["article_id"].isin(filters)]
 
 # ### Model Save
 
-# In[40]:
+# In[64]:
 
 
 # Specify the relative directory path
@@ -375,7 +375,7 @@ torch.save(ebnerd_model.state_dict(), model_save_path)
 
 # ### Model Load
 
-# In[41]:
+# In[65]:
 
 
 # Load the state dictionary from the specified directory
@@ -388,7 +388,7 @@ loaded_model.load_state_dict(torch.load(model_load_path))
 
 # ### Loaded Model Single Prediciton
 
-# In[42]:
+# In[66]:
 
 
 # Specify the user ID for prediction
@@ -421,7 +421,7 @@ print(recommended_items)
 
 # ### Tensorboard
 
-# In[43]:
+# In[67]:
 
 
 # Load the extension and start TensorBoard
@@ -431,7 +431,7 @@ get_ipython().run_line_magic('tensorboard', '--logdir tb_logs')
 
 # ### Convert to Python Script (not needed right now but keep as utility)
 
-# In[44]:
+# In[68]:
 
 
 get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
@@ -439,7 +439,7 @@ get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
 
 # ### Get random user id
 
-# In[45]:
+# In[69]:
 
 
 random_user_index = np.random.randint(0, len(behaviors))
