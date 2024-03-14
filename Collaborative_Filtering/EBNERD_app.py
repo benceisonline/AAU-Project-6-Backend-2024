@@ -18,7 +18,7 @@ class PredictionRequest(BaseModel):
 
 # Pydantic model for response payload
 class PredictionResponse(BaseModel):
-    user_id: str
+    user_id: int
     recommended_items: list
 
 # Endpoint for making predictions
@@ -33,4 +33,4 @@ def read_root():
 
 # Run the FastAPI app
 if __name__ == "__main__":
-    uvicorn.run(app, host="172.20.10.2", port=8000) # Replace with your IP address
+    uvicorn.run(app, host="172.20.10.13", port=8000) # Replace with your IP address
