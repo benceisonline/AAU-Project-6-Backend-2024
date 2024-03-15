@@ -79,3 +79,10 @@ def make_predictions(request, model, user2ind, ind2article, news_data):
     recommended_items = news_data[news_data["article_id"].isin(top_item_ids)][column_names].to_dict(orient='records')
 
     return {"user_id": user_id, "recommended_items": recommended_items}
+
+def get_newest_news(news_data):
+    sorted_news = news_data.sort_values(by="published_time", ascending=False).head(10)
+
+    news_list = sorted_news.to_dict(orient='records')
+
+    return {"news": news_list}
