@@ -6,6 +6,8 @@ from EBNERD_utilities import load_data, initialize_model, make_predictions
 
 app = FastAPI()
 
+url = "172.20.10.4"
+
 # Load data
 news_data, ind2article, article2ind, ind2user, user2ind = load_data()
 
@@ -15,6 +17,7 @@ model = initialize_model(ind2user, ind2article)
 # Pydantic model for request payload
 class PredictionRequest(BaseModel):
     user_id: str
+    no_recommendations: int
 
 # Pydantic model for response payload
 class PredictionResponse(BaseModel):
@@ -33,4 +36,4 @@ def read_root():
 
 # Run the FastAPI app
 if __name__ == "__main__":
-    uvicorn.run(app, host="172.20.10.13", port=8000) # Replace with your IP address
+    uvicorn.run(app, host=url, port=8000) # Replace with your IP address
