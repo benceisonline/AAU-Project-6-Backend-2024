@@ -45,7 +45,7 @@ class PredictionRequest(BaseModel):
 
 # Pydantic model for response payload
 class PredictionResponse(BaseModel):
-    recommended_items: list
+    news: list
 
 # Endpoint for making predictions
 @app.post("/predict", response_model=PredictionResponse)
