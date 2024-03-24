@@ -2,8 +2,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-from datetime import datetime
-from typing import Optional
+from NewsItem import NewsItem
 from EBNERD_utilities import load_data, initialize_model, make_predictions, get_newest_news
 
 app = FastAPI()
@@ -15,28 +14,6 @@ news_data, ind2article, article2ind, ind2user, user2ind = load_data()
 
 # Initialize model
 model = initialize_model(ind2user, ind2article)
-
-class NewsItem(BaseModel):
-    article_id: int
-    title: str
-    subtitle: str
-    last_modified_time: datetime
-    premium: bool
-    body: str
-    published_time: datetime
-    image_ids: Optional[list[int]]
-    article_type: str
-    url: str
-    entity_groups: list[str]
-    topics: list[str]
-    category: int
-    subcategory: list[int]
-    category_str: str
-    total_inviews: Optional[float]
-    total_pageviews: Optional[float]
-    total_read_time: Optional[float]
-    sentiment_score: float
-    sentiment_label: str
 
 # Pydantic model for request payload
 class PredictionRequest(BaseModel):
@@ -60,6 +37,7 @@ class FollowingRequest(BaseModel):
 class FollowingResponse(BaseModel):
     following_news: list
 
+# Endpoint for getting news that the user is following (placeholder)
 @app.get("/following", response_model=FollowingResponse)
 def following(request: FollowingRequest):
     return {"following_news": ["news1", "news2", "news3"]}
