@@ -105,4 +105,11 @@ def make_predictions(request, model, user2ind, ind2article, news_data):
     # Generate image links for recommended items
     generate_image_urls(recommended_items)
 
-    return {"user_id": user_id, "recommended_items": recommended_items}
+    return {"user_id": user_id, "news": recommended_items}
+
+def get_newest_news(news_data):
+    sorted_news = news_data.sort_values(by="published_time", ascending=False).head(10)
+
+    news_list = sorted_news.to_dict(orient='records')
+
+    return {"news": news_list}
