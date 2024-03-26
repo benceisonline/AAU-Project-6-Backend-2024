@@ -108,8 +108,13 @@ def make_predictions(request, model, user2ind, ind2article, news_data):
     return {"user_id": user_id, "news": recommended_items}
 
 def get_newest_news(news_data):
-    sorted_news = news_data.sort_values(by="published_time", ascending=False).head(10)
+    column_names = ["article_id", "title", "subtitle", "last_modified_time", "premium", "body", "published_time", 
+                    "article_type", "url", "category", "category_str", "sentiment_score", "sentiment_label", "image_ids"]
+        
+    sorted_news = news_data[column_names].sort_values(by="published_time", ascending=False).head(10)
 
     news_list = sorted_news.to_dict(orient='records')
+
+    generate_image_urls(news_list)
 
     return {"news": news_list}
