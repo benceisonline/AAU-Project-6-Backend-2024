@@ -7,7 +7,7 @@ from EBNERD_utilities import load_data, initialize_model, make_predictions, get_
 
 app = FastAPI()
 
-url = "172.20.10.4"
+url = "172.20.10.9"
 
 # Load data
 news_data, ind2article, article2ind, ind2user, user2ind = load_data()
@@ -22,7 +22,7 @@ class PredictionRequest(BaseModel):
 
 # Pydantic model for response payload
 class PredictionResponse(BaseModel):
-    news: list
+    news: list[NewsItem]
 
 # Endpoint for making predictions
 @app.post("/predict", response_model=PredictionResponse)
@@ -49,7 +49,6 @@ class AllNewsResponse(BaseModel):
 @app.get("/all", response_model=AllNewsResponse)
 def all_news():
     return get_newest_news(news_data)
-
 
 # Default route to handle requests to the root endpoint
 @app.get("/")
