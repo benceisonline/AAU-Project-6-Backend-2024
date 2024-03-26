@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 import torch
 import pandas as pd
-from newsmf_model import NewsMF
+from newsmf_model import NewsMF  # Assuming 'newsmf_model' is the correct filename
 
 def load_data():
     # Load news data
