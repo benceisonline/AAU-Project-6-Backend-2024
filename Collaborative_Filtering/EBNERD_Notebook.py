@@ -3,7 +3,7 @@
 
 # ### Shell
 
-# In[46]:
+# In[74]:
 
 
 get_ipython().run_line_magic('pip', 'install pytorch_lightning')
@@ -15,7 +15,7 @@ get_ipython().run_line_magic('pip', 'install nbconvert')
 
 # ### Imports
 
-# In[47]:
+# In[75]:
 
 
 import numpy as np # linear algebra
@@ -31,7 +31,7 @@ from collections import Counter
 
 # ### Import for TensorBoard
 
-# In[48]:
+# In[76]:
 
 
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -41,7 +41,7 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 
 # ### Data Preprocessing
 
-# In[49]:
+# In[77]:
 
 
 # Load EBNeRD behaviors dataset for both train and validation
@@ -52,7 +52,7 @@ behaviors = pd.concat([train_behaviour, valid_behaviour], ignore_index=True)
 behaviors.head()
 
 
-# In[50]:
+# In[78]:
 
 
 # Load EBNeRD history dataset for both train and validation
@@ -63,7 +63,7 @@ history = pd.concat([train_history, valid_history], ignore_index=True)
 history.head()
 
 
-# In[51]:
+# In[79]:
 
 
 # Load EBNeRD news dataset
@@ -74,7 +74,7 @@ news.head()
 
 # ### Join history and behaviour tables
 
-# In[52]:
+# In[80]:
 
 
 # Left join on 'user_id'
@@ -86,7 +86,7 @@ behaviour_history_merged.head()
 
 # ### Generate binary labels
 
-# In[53]:
+# In[81]:
 
 
 # Function to create binary labels column
@@ -114,29 +114,31 @@ behaviour_history_merged = create_binary_labels_column(behaviour_history_merged)
 behaviour_history_merged.head()
 
 
-# In[54]:
+# In[82]:
 
 
-# Indexize users for the new dataset
-unique_user_ids = behaviour_history_merged['user_id'].unique()
-user2ind = {itemid: idx for idx, itemid in enumerate(unique_user_ids)}
-ind2user = {idx +1: itemid for idx, itemid in enumerate(unique_user_ids)}
+# Build index of items    
+ind2article = {idx + 1: itemid for idx, itemid in enumerate(news['article_id'].values)}
+article2ind = {itemid: idx for idx, itemid in ind2article.items()}
+
+# Build index of users
+unique_userIds = behaviour_history_merged['user_id'].unique()
+ind2user = {idx + 1: itemid for idx, itemid in enumerate(unique_userIds)}
+user2ind = {itemid: idx for idx, itemid in ind2user.items()}
+
 behaviour_history_merged['userIdx'] = behaviour_history_merged['user_id'].map(lambda x: user2ind.get(x, 0))
+behaviour_history_merged['articleIdx'] = behaviour_history_merged['article_id'].map(lambda x: article2ind.get(x, 0))
+print(f"We have {len(article2ind)} unique articles in the dataset")
 print(f"We have {len(user2ind)} unique users in the dataset")
 
 
-# In[55]:
+# In[ ]:
 
 
-# Indexize articles for the new dataset
-unique_article_ids = behaviour_history_merged['article_id'].unique()
-article2ind = {itemid: idx for idx, itemid in enumerate(unique_article_ids)}
-ind2article = {idx +1: itemid for idx, itemid in enumerate(unique_article_ids)}
-behaviour_history_merged['articleIdx'] = behaviour_history_merged['article_id'].map(lambda x: article2ind.get(x, 0))
-print(f"We have {len(article2ind)} unique articles in the dataset")
 
 
-# In[56]:
+
+# In[83]:
 
 
 # Split data into train and validation
@@ -145,7 +147,7 @@ train_data = behaviour_history_merged[behaviour_history_merged['impression_time'
 valid_data = behaviour_history_merged[behaviour_history_merged['impression_time'] >= test_time_threshold]
 
 
-# In[57]:
+# In[84]:
 
 
 class EBNeRDMindDataset(Dataset):
@@ -168,7 +170,7 @@ class EBNeRDMindDataset(Dataset):
         }
 
 
-# In[58]:
+# In[85]:
 
 
 # Build datasets and dataloaders for train and validation dataframes
@@ -181,7 +183,7 @@ valid_loader = DataLoader(ds_valid, batch_size=bs, shuffle=False)
 
 # ### Model
 
-# In[59]:
+# In[86]:
 
 
 import torch
@@ -309,13 +311,13 @@ class NewsMF(pl.LightningModule):
         return optimizer
 
 
-# In[60]:
+# In[87]:
 
 
 ebnerd_model = NewsMF(num_users=len(user2ind) + 1, num_items=len(article2ind) + 1)
 
 
-# In[61]:
+# In[88]:
 
 
 # Instantiate the trainer
@@ -325,7 +327,7 @@ trainer = pl.Trainer(max_epochs=10, logger=logger)
 trainer.fit(model=ebnerd_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-# In[62]:
+# In[89]:
 
 
 logs = trainer.logged_metrics
@@ -336,7 +338,7 @@ print("Training and validation logs:", logs)
 
 # ### Prediction test
 
-# In[63]:
+# In[90]:
 
 
 USER_ID = 2350 # Random user id
@@ -356,7 +358,7 @@ news[news["article_id"].isin(filters)]
 
 # ### Model Save
 
-# In[64]:
+# In[91]:
 
 
 # Specify the relative directory path
@@ -375,7 +377,7 @@ torch.save(ebnerd_model.state_dict(), model_save_path)
 
 # ### Model Load
 
-# In[65]:
+# In[92]:
 
 
 # Load the state dictionary from the specified directory
@@ -388,7 +390,7 @@ loaded_model.load_state_dict(torch.load(model_load_path))
 
 # ### Loaded Model Single Prediciton
 
-# In[66]:
+# In[93]:
 
 
 # Specify the user ID for prediction
@@ -421,7 +423,7 @@ print(recommended_items)
 
 # ### Tensorboard
 
-# In[67]:
+# In[94]:
 
 
 # Load the extension and start TensorBoard
@@ -431,7 +433,7 @@ get_ipython().run_line_magic('tensorboard', '--logdir tb_logs')
 
 # ### Convert to Python Script (not needed right now but keep as utility)
 
-# In[68]:
+# In[95]:
 
 
 get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
@@ -439,11 +441,49 @@ get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
 
 # ### Get random user id
 
-# In[69]:
+# In[96]:
 
 
 random_user_index = np.random.randint(0, len(behaviors))
 random_user_id = behaviors.iloc[random_user_index]['user_id']
 
 print(f"Randomly selected user ID: {random_user_id}")
+
+
+# ### Validate conversion consistency
+
+# In[98]:
+
+
+def validate_mapping_consistency(user2ind, ind2user, article2ind, ind2article):
+    # Choose a random user and article ID for validation
+    random_user_id = np.random.choice(list(user2ind.keys()))
+    random_article_id = np.random.choice(list(article2ind.keys()))
+    print(f"Randomly selected user ID: {random_user_id}")
+    print(f"Randomly selected article ID: {random_article_id}")
+
+    # Validate user mapping
+    user_index = user2ind.get(random_user_id)
+    retrieved_user_id = ind2user.get(user_index)
+    print(f"User index: {user_index}")
+    print(f"Retrieved user ID: {retrieved_user_id}")
+    
+    user_mapping_consistent = random_user_id == retrieved_user_id
+
+    # Validate article mapping
+    article_index = article2ind.get(random_article_id)
+    retrieved_article_id = ind2article.get(article_index)
+    print(f"Article index: {article_index}")
+    print(f"Retrieved article ID: {retrieved_article_id}")
+
+    article_mapping_consistent = random_article_id == retrieved_article_id
+
+    return user_mapping_consistent, article_mapping_consistent
+
+# Perform validation
+user_consistency, article_consistency = validate_mapping_consistency(user2ind, ind2user, article2ind, ind2article)
+
+# Print results
+print(f"User Mapping Consistency: {user_consistency}")
+print(f"Article Mapping Consistency: {article_consistency}")
 

@@ -7,7 +7,7 @@ from EBNERD_utilities import load_data, initialize_model, make_predictions, get_
 
 app = FastAPI()
 
-url = "172.20.10.9"
+url = "172.20.10.3"
 
 # Load data
 news_data, ind2article, article2ind, ind2user, user2ind = load_data()
