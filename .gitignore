@@ -1,3 +1,5 @@
 .DS_Store
 Collaborative_Filtering/__pycache__
 Collaborative_Filtering/exported_data
+
+.env
