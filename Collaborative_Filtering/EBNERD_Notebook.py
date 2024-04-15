@@ -3,7 +3,9 @@
 
 # ### Shell
 
-# In[46]:
+# Installing necessary packages for the notebook. We recommend using a Conda virtual environment to ensure reliability.
+
+# In[1]:
 
 
 get_ipython().run_line_magic('pip', 'install pytorch_lightning')
@@ -15,7 +17,9 @@ get_ipython().run_line_magic('pip', 'install nbconvert')
 
 # ### Imports
 
-# In[47]:
+# These libraries are essential for data manipulation, neural network building, and training.
+
+# In[2]:
 
 
 import numpy as np # linear algebra
@@ -31,7 +35,9 @@ from collections import Counter
 
 # ### Import for TensorBoard
 
-# In[48]:
+# This part sets up TensorBoard logger, which is used for visualization and monitoring of the model's training progress.
+
+# In[3]:
 
 
 from pytorch_lightning.loggers import TensorBoardLogger
@@ -41,7 +47,9 @@ logger = TensorBoardLogger("tb_logs", name="my_model")
 
 # ### Data Preprocessing
 
-# In[49]:
+# In this section, we load and preprocess the data. It includes loading data from Parquet files, joining tables, generating binary labels, building indexes for items and users, and splitting the data into train and validation sets.
+
+# In[4]:
 
 
 # Load EBNeRD behaviors dataset for both train and validation
@@ -52,7 +60,7 @@ behaviors = pd.concat([train_behaviour, valid_behaviour], ignore_index=True)
 behaviors.head()
 
 
-# In[50]:
+# In[5]:
 
 
 # Load EBNeRD history dataset for both train and validation
@@ -63,7 +71,7 @@ history = pd.concat([train_history, valid_history], ignore_index=True)
 history.head()
 
 
-# In[51]:
+# In[6]:
 
 
 # Load EBNeRD news dataset
@@ -74,7 +82,7 @@ news.head()
 
 # ### Join history and behaviour tables
 
-# In[52]:
+# In[7]:
 
 
 # Left join on 'user_id'
@@ -84,9 +92,11 @@ behaviour_history_merged= pd.merge(behaviors, history, on='user_id', how='left')
 behaviour_history_merged.head()
 
 
-# ### Generate binary labels
+# ### Generate Binary Labels
 
-# In[53]:
+# Generating binary labels enables us to tackle the binary classification problem. Note that this operation could be optimised.
+
+# In[26]:
 
 
 # Function to create binary labels column
@@ -114,29 +124,25 @@ behaviour_history_merged = create_binary_labels_column(behaviour_history_merged)
 behaviour_history_merged.head()
 
 
-# In[54]:
+# In[9]:
 
 
-# Indexize users for the new dataset
-unique_user_ids = behaviour_history_merged['user_id'].unique()
-user2ind = {itemid: idx for idx, itemid in enumerate(unique_user_ids)}
-ind2user = {idx +1: itemid for idx, itemid in enumerate(unique_user_ids)}
+# Build index of items    
+ind2article = {idx + 1: itemid for idx, itemid in enumerate(news['article_id'].values)}
+article2ind = {itemid: idx for idx, itemid in ind2article.items()}
+
+# Build index of users
+unique_userIds = behaviour_history_merged['user_id'].unique()
+ind2user = {idx + 1: itemid for idx, itemid in enumerate(unique_userIds)}
+user2ind = {itemid: idx for idx, itemid in ind2user.items()}
+
 behaviour_history_merged['userIdx'] = behaviour_history_merged['user_id'].map(lambda x: user2ind.get(x, 0))
+behaviour_history_merged['articleIdx'] = behaviour_history_merged['article_id'].map(lambda x: article2ind.get(x, 0))
+print(f"We have {len(article2ind)} unique articles in the dataset")
 print(f"We have {len(user2ind)} unique users in the dataset")
 
 
-# In[55]:
-
-
-# Indexize articles for the new dataset
-unique_article_ids = behaviour_history_merged['article_id'].unique()
-article2ind = {itemid: idx for idx, itemid in enumerate(unique_article_ids)}
-ind2article = {idx +1: itemid for idx, itemid in enumerate(unique_article_ids)}
-behaviour_history_merged['articleIdx'] = behaviour_history_merged['article_id'].map(lambda x: article2ind.get(x, 0))
-print(f"We have {len(article2ind)} unique articles in the dataset")
-
-
-# In[56]:
+# In[10]:
 
 
 # Split data into train and validation
@@ -145,7 +151,11 @@ train_data = behaviour_history_merged[behaviour_history_merged['impression_time'
 valid_data = behaviour_history_merged[behaviour_history_merged['impression_time'] >= test_time_threshold]
 
 
-# In[57]:
+# ### Dataset Model
+
+# Defining the dataset model.
+
+# In[11]:
 
 
 class EBNeRDMindDataset(Dataset):
@@ -168,7 +178,7 @@ class EBNeRDMindDataset(Dataset):
         }
 
 
-# In[58]:
+# In[12]:
 
 
 # Build datasets and dataloaders for train and validation dataframes
@@ -181,7 +191,9 @@ valid_loader = DataLoader(ds_valid, batch_size=bs, shuffle=False)
 
 # ### Model
 
-# In[59]:
+# This section defines our neural network model. It includes creating data loaders, defining the model architecture (NewsMF), specifying training steps, validation steps, optimizer, and training configurations.
+
+# In[48]:
 
 
 import torch
@@ -245,11 +257,6 @@ class NewsMF(pl.LightningModule):
         
         self.train_step_auroc_outputs.append(binary_auroc_score)
 
-        # Log metrics to TensorBoard
-        self.log('train_loss', loss)
-        self.log('train_f1', f1)
-        self.log('train_auroc', binary_auroc_score)
-
         return {'loss': loss, 'f1': f1, 'auroc': binary_auroc_score}
     
     def on_train_epoch_end(self):
@@ -285,11 +292,6 @@ class NewsMF(pl.LightningModule):
                                                )
         
         self.validation_step_auroc_outputs.append(binary_auroc_score)
-
-        # Log metrics to TensorBoard
-        self.log('val_loss', loss)
-        self.log('val_f1', f1)
-        self.log('val_auroc', binary_auroc_score)
                 
         return {'loss': loss, 'f1': f1, 'auroc': binary_auroc_score}
 
@@ -309,13 +311,13 @@ class NewsMF(pl.LightningModule):
         return optimizer
 
 
-# In[60]:
+# In[49]:
 
 
 ebnerd_model = NewsMF(num_users=len(user2ind) + 1, num_items=len(article2ind) + 1)
 
 
-# In[61]:
+# In[50]:
 
 
 # Instantiate the trainer
@@ -325,7 +327,7 @@ trainer = pl.Trainer(max_epochs=10, logger=logger)
 trainer.fit(model=ebnerd_model, train_dataloaders=train_loader, val_dataloaders=valid_loader)
 
 
-# In[62]:
+# In[16]:
 
 
 logs = trainer.logged_metrics
@@ -336,7 +338,9 @@ print("Training and validation logs:", logs)
 
 # ### Prediction test
 
-# In[63]:
+# Here, we perform a prediction test using our trained model. It involves selecting a random user, generating predictions for item recommendations, and filtering the top recommended items.
+
+# In[17]:
 
 
 USER_ID = 2350 # Random user id
@@ -356,7 +360,9 @@ news[news["article_id"].isin(filters)]
 
 # ### Model Save
 
-# In[64]:
+# This section saves the trained model's state dictionary to a specified directory.
+
+# In[18]:
 
 
 # Specify the relative directory path
@@ -375,7 +381,9 @@ torch.save(ebnerd_model.state_dict(), model_save_path)
 
 # ### Model Load
 
-# In[65]:
+# Here, we load the saved model from the directory.
+
+# In[19]:
 
 
 # Load the state dictionary from the specified directory
@@ -386,9 +394,11 @@ model_load_path = os.path.join("Saved_Model", "EBNERD_collaborative_filtering_mo
 loaded_model.load_state_dict(torch.load(model_load_path))
 
 
-# ### Loaded Model Single Prediciton
+# ### Loaded Model Single Prediction
 
-# In[66]:
+# Similar to the prediction test, but this time, it involves loading the saved model and making predictions for a specific user.
+
+# In[20]:
 
 
 # Specify the user ID for prediction
@@ -421,7 +431,9 @@ print(recommended_items)
 
 # ### Tensorboard
 
-# In[67]:
+# This section loads and starts TensorBoard to visualize training metrics.
+
+# In[21]:
 
 
 # Load the extension and start TensorBoard
@@ -429,9 +441,13 @@ get_ipython().run_line_magic('load_ext', 'tensorboard')
 get_ipython().run_line_magic('tensorboard', '--logdir tb_logs')
 
 
+# ### Utilities
+
+# This section contains various utility functions and commands. It includes converting the notebook to a Python script, getting a random user ID, and validating index mappings.
+
 # ### Convert to Python Script (not needed right now but keep as utility)
 
-# In[68]:
+# In[22]:
 
 
 get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
@@ -439,11 +455,49 @@ get_ipython().system('python -m nbconvert --to script EBNERD_Notebook.ipynb')
 
 # ### Get random user id
 
-# In[69]:
+# In[23]:
 
 
 random_user_index = np.random.randint(0, len(behaviors))
 random_user_id = behaviors.iloc[random_user_index]['user_id']
 
 print(f"Randomly selected user ID: {random_user_id}")
+
+
+# ### Validate conversion consistency
+
+# In[24]:
+
+
+def validate_mapping_consistency(user2ind, ind2user, article2ind, ind2article):
+    # Choose a random user and article ID for validation
+    random_user_id = np.random.choice(list(user2ind.keys()))
+    random_article_id = np.random.choice(list(article2ind.keys()))
+    print(f"Randomly selected user ID: {random_user_id}")
+    print(f"Randomly selected article ID: {random_article_id}")
+
+    # Validate user mapping
+    user_index = user2ind.get(random_user_id)
+    retrieved_user_id = ind2user.get(user_index)
+    print(f"User index: {user_index}")
+    print(f"Retrieved user ID: {retrieved_user_id}")
+    
+    user_mapping_consistent = random_user_id == retrieved_user_id
+
+    # Validate article mapping
+    article_index = article2ind.get(random_article_id)
+    retrieved_article_id = ind2article.get(article_index)
+    print(f"Article index: {article_index}")
+    print(f"Retrieved article ID: {retrieved_article_id}")
+
+    article_mapping_consistent = random_article_id == retrieved_article_id
+
+    return user_mapping_consistent, article_mapping_consistent
+
+# Perform validation
+user_consistency, article_consistency = validate_mapping_consistency(user2ind, ind2user, article2ind, ind2article)
+
+# Print results
+print(f"User Mapping Consistency: {user_consistency}")
+print(f"Article Mapping Consistency: {article_consistency}")
 
