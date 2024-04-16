@@ -35,9 +35,7 @@ class NewsTools:
         start_index = request.start_index
         no_recommendations = request.no_recommendations
 
-        print(start_index, no_recommendations)
-
-        response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, start_index + no_recommendations).execute()
+        response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, (start_index + no_recommendations) - 1).execute()
 
         if response == None:
             raise ValueError("No articles found with the given range")
