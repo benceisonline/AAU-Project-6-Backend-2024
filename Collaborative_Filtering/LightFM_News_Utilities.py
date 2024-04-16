@@ -35,6 +35,8 @@ class NewsTools:
         start_index = request.start_index
         no_recommendations = request.no_recommendations
 
+        print(start_index, no_recommendations)
+
         response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, start_index + no_recommendations).execute()
 
         if response == None:

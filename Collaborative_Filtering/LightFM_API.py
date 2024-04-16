@@ -47,7 +47,7 @@ class AllNewsRequest(BaseModel):
 class AllNewsResponse(BaseModel):
     news: list[object]
 
-@app.get("/all", response_model=AllNewsResponse)
+@app.post("/all", response_model=AllNewsResponse)
 def all_news(request: AllNewsRequest):
     return news_tools.get_newest_news(request)
 
