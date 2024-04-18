@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from lightfm import LightFM
 from lightfm.data import Dataset
+from lightfm.evaluation import auc_score
 import joblib
 
 class RecommenderSystem:
@@ -23,8 +24,22 @@ class RecommenderSystem:
         self.train_interactions, _ = self.dataset.build_interactions(train_data.iloc[:, 0:3].values)
         self.test_interactions, _ = self.dataset.build_interactions(test_data.iloc[:, 0:3].values)
 
+    def load_half_data(self):
+        train_data_half = pd.read_csv("exported_data/train_data_half.csv")
+        test_data = pd.read_csv(self.test_data_path)
+
+        self.dataset = Dataset()
+        self.dataset.fit(users=pd.concat([train_data_half['userID'], test_data['userID']]),
+                         items=pd.concat([train_data_half['itemID'], test_data['itemID']]))
+
+        self.train_interactions, _ = self.dataset.build_interactions(train_data_half.iloc[:, 0:3].values)
+        self.test_interactions, _ = self.dataset.build_interactions(test_data.iloc[:, 0:3].values)
+
     def load_model(self):
         self.model = joblib.load(self.model_path)
+    
+    def load_half_trained_model(self):
+        self.model = joblib.load("PATH TO HALF TRAINED MODEL")
 
     def make_predictions_for_user(self, request, news_data):
         user_id = int(request.user_id)  # Convert user_id to int
@@ -55,6 +70,23 @@ class RecommenderSystem:
         recommended_items = news_data[news_data["article_id"].isin(top_item_ids)][column_names].to_dict(orient='records')
 
         return {"news": recommended_items}
+    
+    # Have not tested if it works
+    # What should happen is, new data is added to train data in database, new train data is loaded, the model is trained on it, and AUC is outputted
+    def incremental_train(self, epochs=1, num_threads=1, verbose=False):
+        self.load_data()
+        self.model.fit_partial(self.train_interactions, epochs=epochs, num_threads=num_threads, verbose=verbose)
+        self.get_validation_AUC_score(num_threads=num_threads)
+        joblib.dump(self.model, 'lightfm_model_joblib_retrained.joblib')
+
+    def get_validation_AUC_score(self, num_threads=1):
+        # Calculate AUC score after each training iteration
+        test_interactions_excl_train = self.test_interactions - self.train_interactions.multiply(self.test_interactions)
+        auc_scores = auc_score(self.model, test_interactions=test_interactions_excl_train, num_threads=num_threads)
+        num_auc_scores = len(auc_scores)
+        average_auc_score = np.mean(auc_scores)
+        print("Number of AUC scores calculated:", num_auc_scores)
+        print("Average AUC score:", average_auc_score)
 
 if __name__ == "__main__":
     train_data_path = "exported_data/train_data.csv"
@@ -62,9 +94,18 @@ if __name__ == "__main__":
     model_path = "Saved_Model/lightfm_model_joblib.joblib"
 
     recommender_system = RecommenderSystem(train_data_path, test_data_path, model_path)
-    recommender_system.load_data()
-    recommender_system.load_model()
+    recommender_system.load_half_data() # Load half of the training data
+    recommender_system.load_half_trained_model() # Load half trained model (get it from Colab)
 
     user_id = 1078040
     predictions_df = recommender_system.make_predictions_for_user(user_id)
     print(predictions_df)
+
+    # AUC score with half of the training data
+    recommender_system.get_validation_AUC_score()
+
+    # Partial fit with other half of the training data, should result in fully trained model
+    recommender_system.incremental_train()
+
+    # AUC score with full training data
+    recommender_system.get_validation_AUC_score()
