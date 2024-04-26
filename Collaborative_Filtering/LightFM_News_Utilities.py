@@ -1,6 +1,7 @@
 import hashlib
 import pandas as pd
 import numpy as np
+from supabase_utils import supabase
 
 class NewsTools:
     def __init__(self, data):
@@ -17,8 +18,8 @@ class NewsTools:
             image_ids = item.get('image_ids')
             if image_ids is not None and len(image_ids) > 0:  # Check if image_ids is not None and is not empty
                 image_id = image_ids[0]  # Assuming only the first image is used
-                published_timestamp = item['published_time'].value / 1000000  # convert to seconds
-                modified_timestamp = item['last_modified_time'].value / 1000000  # convert to seconds
+                published_timestamp = pd.Timestamp(item['published_time']).value / 1000000
+                modified_timestamp = pd.Timestamp(item['last_modified_time']).value / 1000000
                 item['image_url'] = self.generate_image_url(image_id, article_id, published_timestamp, modified_timestamp)
             else:
                 # If no image IDs are available, use default image URL
@@ -30,14 +31,17 @@ class NewsTools:
 
         return recommended_items
     
-    def get_newest_news(self, news_data):
-        column_names = ["article_id", "title", "subtitle", "last_modified_time", "premium", "body", "published_time", 
-                        "article_type", "url", "category", "category_str", "sentiment_score", "sentiment_label", "image_ids"]
-            
-        sorted_news = news_data[column_names].sort_values(by="published_time", ascending=False).head(10)
+    def get_newest_news(self, request):
+        start_index = request.start_index
+        no_recommendations = request.no_recommendations
 
-        news_list = sorted_news.to_dict(orient='records')
+        response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, (start_index + no_recommendations) - 1).execute()
 
-        self.generate_image_urls(news_list)
+        if response == None:
+            raise ValueError("No articles found with the given range")
 
-        return {"news": news_list}
+        self.generate_image_urls(response.data)
+        
+        return {"news": response.data}
+
+        

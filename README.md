@@ -12,7 +12,7 @@ You can add the extension directly inside VS Code, or by using this [link](https
 
 ## Step 2: Create & Activate Conda Environment
 ```bash
-conda create -n ml python
+conda create -n ml python=3.11
 ```
 ```bash
 conda activate ml
