@@ -4,12 +4,13 @@ from lightfm import LightFM
 from lightfm.data import Dataset
 from lightfm.evaluation import auc_score
 import joblib
+import os
 
 class RecommenderSystem:
-    def __init__(self, train_data_path, test_data_path, model_path):
+    def __init__(self, train_data_path, test_data_path, models_folder_path):
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
-        self.model_path = model_path
+        self.models_folder_path = models_folder_path
         self.model = None
         self.dataset = None
 
@@ -27,8 +28,14 @@ class RecommenderSystem:
         print("Train interactions shape:", self.train_interactions.shape)
         print("Test interactions shape:", self.test_interactions.shape)
 
-    def load_model(self):
-        self.model = joblib.load(self.model_path)
+    def load_model(self, model_id):
+        model_file = os.path.join(self.models_folder_path, f"{model_id}.joblib")
+        if not os.path.exists(model_file):
+            raise FileNotFoundError(f"Model file not found for model ID: {model_id}")
+
+        # Load the model
+        self.model = joblib.load(model_file)
+        print(f"Loaded model {model_id}")
 
     def make_predictions_for_user(self, request, news_data): #replace user_id with request
         user_id = int(request.user_id)  # Convert user_id to int
@@ -86,7 +93,7 @@ class RecommenderSystem:
     # you must retrain the model.
 
     # What should happen is, new train data is loaded, the model is trained on it, and AUC is outputted
-    def retrain(self, epochs=1):
+    def retrain(self, epochs):
         self.load_data()
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
         joblib.dump(self.model, 'Saved_Model/lightfm_model_joblib_retrained.joblib')
@@ -115,7 +122,7 @@ if __name__ == "__main__":
     test_data_path = "exported_data/valid_data.csv"
     model_path = "Saved_Model/lightfm_model_joblib.joblib"
     news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
-    request = Request(user_id=1473460, no_recommendations=10)
+    request = Request(user_id=136336, no_recommendations=10)
 
     recommender_system = RecommenderSystem(train_data_path, test_data_path, model_path)
     recommender_system.load_half_data() # Load half of the training data
@@ -127,6 +134,6 @@ if __name__ == "__main__":
     #print(predictions_df)
 
     # Partial fit with other half of the training data, should result in fully trained model
-    recommender_system.retrain()
+    recommender_system.retrain(epochs=1)
 
     recommender_system.get_validation_AUC_score() # Get AUC score for half trained model
