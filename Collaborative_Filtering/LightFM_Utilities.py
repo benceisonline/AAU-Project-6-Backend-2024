@@ -5,6 +5,7 @@ from lightfm.data import Dataset
 from lightfm.evaluation import auc_score
 import joblib
 import os
+from supabase_utils import supabase
 
 class RecommenderSystem:
     def __init__(self, train_data_path, test_data_path, models_folder_path):
@@ -41,8 +42,9 @@ class RecommenderSystem:
         print(f"Loaded model {model_id}")
 
     # Make predictions for a given user and return number of news items based on request
-    def make_predictions_for_user(self, request, news_data): #replace user_id with request
-        user_id = int(request.user_id)  # Convert user_id to int
+    def make_predictions_for_user(self, request):
+        user_id = int(request.user_id) 
+        start_index = request.start_index
         num_of_recs = request.no_recommendations
 
         if user_id not in self.dataset.mapping()[0]:
@@ -56,20 +58,15 @@ class RecommenderSystem:
         actual_item_ids = np.array(list(self.dataset.mapping()[2].keys()))
 
         sorted_indices = np.argsort(predictions)[::-1]
-        sorted_predictions = predictions[sorted_indices]
         sorted_item_ids = actual_item_ids[sorted_indices]
 
-        top_item_ids = sorted_item_ids[:num_of_recs]
-        top_predictions = sorted_predictions[:num_of_recs]
+        top_item_ids = sorted_item_ids[start_index:start_index+num_of_recs]
+        response = supabase.table('Articles').select('*').in_('article_id', top_item_ids).execute()
 
-        # Extract relevant columns for recommendation
-        column_names = ["article_id", "title", "subtitle", "last_modified_time", "premium", "body", "published_time", 
-                        "article_type", "url", "category", "category_str", "sentiment_score", "sentiment_label", "image_ids"]
+        if response == None:
+            raise ValueError("No articles found with the given IDs")
 
-        # Extract recommended items
-        recommended_items = news_data[news_data["article_id"].isin(top_item_ids)][column_names].to_dict(orient='records')
-
-        return {"news": recommended_items}
+        return {"news": response.data}
     
     # Load half trained model from joblib file for retrain testing
     def load_half_trained_model(self):

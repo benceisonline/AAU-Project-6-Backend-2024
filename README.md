@@ -13,7 +13,7 @@ You can add the extension directly inside VS Code, or by using this [link](https
 ## Step 2: Create & Activate Conda Environment With Python 3.11 or lower
 LightFM is the only component limiting Python version, if the model is switched out, keeping Python version and packages up to date is advisable.
 ```bash
-conda create -n ml python 3.11
+conda create -n ml python=3.11
 ```
 ```bash
 conda activate ml

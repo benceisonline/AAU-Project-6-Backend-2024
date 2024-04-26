@@ -9,3 +9,5 @@ uvicorn
 flake8
 lightfm
 joblib
+supabase
+python-dotenv
