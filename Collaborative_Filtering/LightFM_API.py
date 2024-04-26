@@ -9,7 +9,7 @@ import pandas as pd
 
 app = FastAPI()
 
-url = "172.20.10.18"
+url = "172.20.10.4"
 
 news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)
@@ -31,7 +31,7 @@ class PredictionRequest(BaseModel):
 
 # Pydantic model for response payload
 class PredictionResponse(BaseModel):
-    news: list[NewsItem]
+    news: list[object]
 
 # Endpoint for making predictions
 @app.post("/predict", response_model=PredictionResponse)
@@ -45,6 +45,10 @@ class AllNewsRequest(BaseModel):
     no_recommendations: int
 
 # Pydantic model for response payload
+class AllNewsRequest(BaseModel):
+    start_index: int
+    no_recommendations: int
+
 class AllNewsResponse(BaseModel):
     news: list[object]
 
