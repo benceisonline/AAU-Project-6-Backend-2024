@@ -14,6 +14,8 @@ class RecommenderSystem:
         self.model = None
         self.dataset = None
 
+    # Load data from CSV files and build interactions
+    # Paths are given at recommender initialization
     def load_data(self):
         train_data = pd.read_csv(self.train_data_path)
         test_data = pd.read_csv(self.test_data_path)
@@ -28,6 +30,7 @@ class RecommenderSystem:
         print("Train interactions shape:", self.train_interactions.shape)
         print("Test interactions shape:", self.test_interactions.shape)
 
+    # Load model from joblib file with given model_id
     def load_model(self, model_id):
         model_file = os.path.join(self.models_folder_path, f"{model_id}.joblib")
         if not os.path.exists(model_file):
@@ -37,6 +40,7 @@ class RecommenderSystem:
         self.model = joblib.load(model_file)
         print(f"Loaded model {model_id}")
 
+    # Make predictions for a given user and return number of news items based on request
     def make_predictions_for_user(self, request, news_data): #replace user_id with request
         user_id = int(request.user_id)  # Convert user_id to int
         num_of_recs = request.no_recommendations
@@ -67,9 +71,11 @@ class RecommenderSystem:
 
         return {"news": recommended_items}
     
+    # Load half trained model from joblib file for retrain testing
     def load_half_trained_model(self):
         self.model = joblib.load("Saved_Model/lightfm_model_joblib_half_trained.joblib")
 
+    # Load half of the training data for retrain testing
     def load_half_data(self):
         train_data_half = pd.read_csv("exported_data/train_data_half.csv")
         test_data = pd.read_csv(self.test_data_path)
@@ -84,20 +90,18 @@ class RecommenderSystem:
         print("Train interactions shape:", self.train_interactions.shape)
         print("Test interactions shape:", self.test_interactions.shape)
 
-    # Have not tested if it works
-
     # As a cautionary note to new users, when using model.fit_partial 
     # the users/items/features in the supplied matrices 
     # must have been present during the initial training. 
     # Meaning, if you want to add new users/items/features, 
-    # you must retrain the model.
-
-    # What should happen is, new train data is loaded, the model is trained on it, and AUC is outputted
+    # you must retrain the model. This is why we use retrain 
+    # not partial fit.
     def retrain(self, epochs):
         self.load_data()
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
         joblib.dump(self.model, 'Saved_Model/lightfm_model_joblib_retrained.joblib')
 
+    # Get AUC score for the model
     def get_validation_AUC_score(self, num_threads=1):
         test_interactions_excl_train = self.test_interactions - self.train_interactions.multiply(self.test_interactions)
 
@@ -117,6 +121,7 @@ class Request:
         self.user_id = user_id
         self.no_recommendations = no_recommendations
 
+# You would not usually run this, it is just for demonstration purposes
 if __name__ == "__main__":
     train_data_path = "exported_data/train_data.csv"
     test_data_path = "exported_data/valid_data.csv"
