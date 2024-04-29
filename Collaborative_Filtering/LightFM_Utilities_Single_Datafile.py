@@ -100,6 +100,17 @@ class RecommenderSystem:
     # not partial fit.
     def retrain(self, epochs):
         self.load_data()
+
+        # model learning rate
+        LEARNING_RATE = 0.25
+        # no of latent factors
+        NO_COMPONENTS = 20
+        # seed for pseudonumber generations
+        SEED = 42
+
+        self.model = LightFM(loss='warp', no_components=NO_COMPONENTS,
+                 learning_rate=LEARNING_RATE,
+                 random_state=np.random.RandomState(SEED))
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
         joblib.dump(self.model, 'Saved_Model/lightfm_model_joblib_retrained.joblib')
 
