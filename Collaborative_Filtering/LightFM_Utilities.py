@@ -7,6 +7,7 @@ import joblib
 import os
 from supabase_utils import supabase
 
+# This version of the RecommenderSystem works with seperate train and test data files
 class RecommenderSystem:
     def __init__(self, train_data_path, test_data_path, models_folder_path):
         self.train_data_path = train_data_path
