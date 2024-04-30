@@ -10,7 +10,8 @@ Download Postman from this [link](https://www.postman.com/downloads/) 👷
 ## Step 1.5 Add Tensorboard Extension to Visual Studio Code (Optional)
 You can add the extension directly inside VS Code, or by using this [link](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.tensorboard) 📊
 
-## Step 2: Create & Activate Conda Environment
+## Step 2: Create & Activate Conda Environment With Python 3.11 or lower
+LightFM is the only component limiting Python version, if the model is switched out, keeping Python version and packages up to date is advisable.
 ```bash
 conda create -n ml python=3.11
 ```
@@ -24,9 +25,9 @@ pip install -r requirements.txt
 ```
 
 ## Step 4: Local host the API
-Update IP to your local IP address in App.py
+Update IP to your local IP address and run model serving API
 ```bash
-python app.py
+python LightFM_API.py
 ```
 
 ## Step 5: Test API Endpoints 

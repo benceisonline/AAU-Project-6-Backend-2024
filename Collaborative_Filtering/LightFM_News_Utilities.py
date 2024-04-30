@@ -34,14 +34,8 @@ class NewsTools:
     def get_newest_news(self, request):
         start_index = request.start_index
         no_recommendations = request.no_recommendations
-
         response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, (start_index + no_recommendations) - 1).execute()
-
         if response == None:
             raise ValueError("No articles found with the given range")
-
         self.generate_image_urls(response.data)
-        
         return {"news": response.data}
-
-        

@@ -9,18 +9,19 @@ import pandas as pd
 
 app = FastAPI()
 
-url = "172.20.10.4"
+url = "172.20.10.3"
 
 news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)
 
 train_data_path = "exported_data/train_data.csv"
 test_data_path = "exported_data/valid_data.csv"
-model_path = "Saved_Model/lightfm_model_joblib.joblib"
+models_folder_path = "Saved_Model/"
+model_id = "lightfm_model_multi_file"
 
-recommender_system = RecommenderSystem(train_data_path, test_data_path, model_path)
+recommender_system = RecommenderSystem(train_data_path, test_data_path, models_folder_path)
 recommender_system.load_data()
-recommender_system.load_model()
+recommender_system.load_model(model_id);
 
 # Pydantic model for request payload
 class PredictionRequest(BaseModel):
@@ -38,6 +39,10 @@ def predict(request: PredictionRequest):
     result = recommender_system.make_predictions_for_user(request)
     news_tools.generate_image_urls(result['news'])
     return result
+
+class AllNewsRequest(BaseModel):
+    start_index: int
+    no_recommendations: int
 
 # Pydantic model for response payload
 class AllNewsRequest(BaseModel):
