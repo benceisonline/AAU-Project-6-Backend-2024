@@ -71,7 +71,7 @@ class RecommenderSystem:
     
     # Load half trained model from joblib file for retrain testing
     def load_half_trained_model(self):
-        self.model = joblib.load("Saved_Model/lightfm_model_joblib_half_trained.joblib")
+        self.model = joblib.load("Saved_Model/lightfm_model_multi_file_half.joblib")
 
     # Load half of the training data for retrain testing
     def load_half_data(self):
@@ -97,7 +97,7 @@ class RecommenderSystem:
     def retrain(self, epochs):
         self.load_data()
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
-        joblib.dump(self.model, 'Saved_Model/lightfm_model_joblib_retrained.joblib')
+        joblib.dump(self.model, 'Saved_Model/lightfm_model_retrained.joblib')
 
     # Get AUC score for the model
     def get_validation_AUC_score(self, num_threads=1):
@@ -123,7 +123,7 @@ class Request:
 if __name__ == "__main__":
     train_data_path = "exported_data/train_data.csv"
     test_data_path = "exported_data/valid_data.csv"
-    model_path = "Saved_Model/lightfm_model_joblib.joblib"
+    model_path = "Saved_Model/lightfm_multi_file.joblib"
     news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
     request = Request(user_id=136336, no_recommendations=10)
 
