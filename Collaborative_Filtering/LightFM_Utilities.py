@@ -115,9 +115,10 @@ class RecommenderSystem:
         return average_auc
 
 class Request:
-    def __init__(self, user_id, no_recommendations):
-        self.user_id = user_id
-        self.no_recommendations = no_recommendations
+    def __init__(self, user_id, start_index, no_recommendations):
+        user_id: str
+        start_index: int
+        no_recommendations: int
 
 # You would not usually run this, it is just for demonstration purposes
 if __name__ == "__main__":
@@ -125,7 +126,7 @@ if __name__ == "__main__":
     test_data_path = "exported_data/valid_data.csv"
     model_path = "Saved_Model/lightfm_multi_file.joblib"
     news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
-    request = Request(user_id=136336, no_recommendations=10)
+    request = Request(user_id = 136336, start_index = 1, no_recommendations = 10)
 
     recommender_system = RecommenderSystem(train_data_path, test_data_path, model_path)
     recommender_system.load_half_data() # Load half of the training data
