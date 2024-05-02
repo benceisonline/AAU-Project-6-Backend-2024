@@ -7,7 +7,6 @@ from lightfm.evaluation import auc_score
 import joblib
 import os
 from supabase_utils import supabase
-import asyncio
 
 # This version of the RecommenderSystem works with a single data file
 class RecommenderSystem:
@@ -69,6 +68,7 @@ class RecommenderSystem:
         sorted_item_ids = actual_item_ids[sorted_indices]
 
         top_item_ids = sorted_item_ids[start_index:start_index+num_of_recs]
+    
         response = supabase.table('Articles').select('*').in_('article_id', top_item_ids).execute()
 
         if response == None:
