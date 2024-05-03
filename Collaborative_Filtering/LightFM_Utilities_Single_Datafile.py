@@ -22,10 +22,14 @@ class RecommenderSystem:
         TEST_PERCENTAGE = 0.25 # percentage of data used for testing
         SEED = 42 # seed for pseudonumber generations
 
+        # Load data from Supabase (Supabase is not being nice right now)
+        # response = supabase.table('LightFM').select("*").order('user_id', desc=True).execute()
+        # data = pd.DataFrame(response.data)
+
         data = pd.read_csv(self.data_path)
 
         self.dataset = Dataset()
-        self.dataset.fit(users=data['userID'], items=data['itemID'])
+        self.dataset.fit(users=data['user_id'], items=data['item_id'])
 
         (interactions, weights) = self.dataset.build_interactions(data.iloc[:, 0:3].values)
         self.train_interactions, self.test_interactions = cross_validation.random_train_test_split(
@@ -64,6 +68,7 @@ class RecommenderSystem:
         sorted_item_ids = actual_item_ids[sorted_indices]
 
         top_item_ids = sorted_item_ids[start_index:start_index+num_of_recs]
+    
         response = supabase.table('Articles').select('*').in_('article_id', top_item_ids).execute()
 
         if response == None:
