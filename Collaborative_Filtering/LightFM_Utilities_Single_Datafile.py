@@ -29,7 +29,7 @@ class RecommenderSystem:
         data = pd.read_csv(self.data_path)
 
         self.dataset = Dataset()
-        self.dataset.fit(users=data['user_id'], items=data['item_id'])
+        self.dataset.fit(users=data['userID'], items=data['itemID'])
 
         (interactions, weights) = self.dataset.build_interactions(data.iloc[:, 0:3].values)
         self.train_interactions, self.test_interactions = cross_validation.random_train_test_split(
