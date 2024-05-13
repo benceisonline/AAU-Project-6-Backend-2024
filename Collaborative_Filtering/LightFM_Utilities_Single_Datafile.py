@@ -136,9 +136,9 @@ class RecommenderSystem:
 
 class Request:
     def __init__(self, user_id, start_index, no_recommendations):
-        user_id: str
-        start_index: int
-        no_recommendations: int
+        self.user_id = user_id
+        self.start_index = start_index
+        self.no_recommendations = no_recommendations
 
 # You would not usually run this, it is just for demonstration purposes
 if __name__ == "__main__":
