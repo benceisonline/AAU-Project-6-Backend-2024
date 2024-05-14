@@ -29,7 +29,7 @@ class RecommenderSystem:
         data = pd.read_csv(self.data_path)
 
         self.dataset = Dataset()
-        self.dataset.fit(users=data['user_id'], items=data['item_id'])
+        self.dataset.fit(users=data['userID'], items=data['itemID'])
 
         (interactions, weights) = self.dataset.build_interactions(data.iloc[:, 0:3].values)
         self.train_interactions, self.test_interactions = cross_validation.random_train_test_split(
@@ -136,9 +136,9 @@ class RecommenderSystem:
 
 class Request:
     def __init__(self, user_id, start_index, no_recommendations):
-        user_id: str
-        start_index: int
-        no_recommendations: int
+        self.user_id = user_id
+        self.start_index = start_index
+        self.no_recommendations = no_recommendations
 
 # You would not usually run this, it is just for demonstration purposes
 if __name__ == "__main__":

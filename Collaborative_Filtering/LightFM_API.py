@@ -9,14 +9,14 @@ import pandas as pd
 
 app = FastAPI()
 
-url = "172.20.10.4"
+url = "192.168.1.79"
 
 news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)
 
 train_data_path = "exported_data/train_data.csv"
 test_data_path = "exported_data/valid_data.csv"
-data_path = "exported_data/combined_data.csv"
+data_path = "exported_data/combined_data_small.csv"
 models_folder_path = "Saved_Model/"
 model_id = "lightfm_model_multi_file"
 

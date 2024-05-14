@@ -10,3 +10,4 @@ lightfm
 joblib
 supabase
 python-dotenv
+pytest
