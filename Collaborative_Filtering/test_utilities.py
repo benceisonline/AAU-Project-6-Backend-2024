@@ -7,7 +7,7 @@ from LightFM_Utilities_Single_Datafile import RecommenderSystem, Request
 # Define test data paths
 DATA_PATH = "exported_data/combined_data_small.csv"
 MODEL_FOLDER_PATH = "Saved_Model/"
-MODEL_ID = "lightfm_model_multi_file"
+MODEL_ID = "lightfm_model_combined_data_small"
 
 @pytest.fixture
 def recommender_system():

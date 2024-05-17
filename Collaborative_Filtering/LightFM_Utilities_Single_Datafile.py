@@ -6,7 +6,7 @@ from lightfm import cross_validation
 from lightfm.evaluation import auc_score
 import joblib
 import os
-from supabase_utils import supabase
+from supabase_utils import fetch_data_from_supabase, fetch_articles
 
 # This version of the RecommenderSystem works with a single data file
 class RecommenderSystem:
@@ -23,9 +23,8 @@ class RecommenderSystem:
         SEED = 42 # seed for pseudonumber generations
 
         # Load data from Supabase (Supabase is not being nice right now)
-        # response = supabase.table('LightFM').select("*").order('user_id', desc=True).execute()
-        # data = pd.DataFrame(response.data)
-
+        # data = fetch_data_from_supabase('LightFM')
+        
         data = pd.read_csv(self.data_path)
 
         self.dataset = Dataset()
@@ -69,33 +68,9 @@ class RecommenderSystem:
 
         top_item_ids = sorted_item_ids[start_index:start_index+num_of_recs]
     
-        response = supabase.table('Articles').select('*').in_('article_id', top_item_ids).execute()
+        articles = fetch_articles(top_item_ids)
 
-        if response == None:
-            raise ValueError("No articles found with the given IDs")
-
-        return {"news": response.data}
-    
-    # Load model trained on demo data
-    def load_demo_trained_model(self):
-        self.model = joblib.load("Saved_Model/lightfm_model_combined_data_demo.joblib")
-
-    # Load demo data
-    def load_demo_data(self):
-        TEST_PERCENTAGE = 0.25 # percentage of data used for testing
-        SEED = 42 # seed for pseudonumber generations
-
-        data = pd.read_csv("exported_data/combined_data_demo.csv")
-
-        self.dataset = Dataset()
-        self.dataset.fit(users=data['userID'], items=data['itemID'])
-
-        (interactions, weights) = self.dataset.build_interactions(data.iloc[:, 0:3].values)
-        self.train_interactions, self.test_interactions = cross_validation.random_train_test_split(
-        interactions, test_percentage=TEST_PERCENTAGE, random_state=np.random.RandomState(SEED))
-
-        print("Train interactions shape:", self.train_interactions.shape)
-        print("Test interactions shape:", self.test_interactions.shape)
+        return {"news": articles}
 
     # As a cautionary note to new users, when using model.fit_partial 
     # the users/items/features in the supplied matrices 
@@ -139,24 +114,3 @@ class Request:
         self.user_id = user_id
         self.start_index = start_index
         self.no_recommendations = no_recommendations
-
-# You would not usually run this, it is just for demonstration purposes
-if __name__ == "__main__":
-    data_path = "exported_data/combined_data_small.csv"
-    model_path = "Saved_Model/lightfm_model_combined_data_small.joblib"
-    news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
-    request = Request(user_id=136336, start_index = 1, no_recommendations=10)
-
-    recommender_system = RecommenderSystem(data_path, model_path)
-
-    recommender_system.load_demo_data() # Load demo training data
-    recommender_system.load_demo_trained_model() # Load demo trained model (get it from Colab)
-    recommender_system.get_validation_AUC_score() # Get AUC score for demo trained model
-
-    #predictions_df = recommender_system.make_predictions_for_user(request, news_data)
-    #print(predictions_df)
-
-    # Partial fit with small training data, should result in fully trained model
-    recommender_system.retrain(epochs=1)
-
-    recommender_system.get_validation_AUC_score() # Get AUC score for half trained model

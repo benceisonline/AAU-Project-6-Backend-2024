@@ -1,7 +1,7 @@
 import hashlib
 import pandas as pd
 import numpy as np
-from supabase_utils import supabase
+from supabase_utils import supabase, fetch_newest_articles
 
 class NewsTools:
     def __init__(self, data):
@@ -34,10 +34,7 @@ class NewsTools:
     def get_newest_news(self, request):
         start_index = request.start_index
         no_recommendations = request.no_recommendations
-        response = supabase.table('Articles').select('*').order('published_time', desc=True).range(start_index, (start_index + no_recommendations) - 1).execute()
+        response_data = fetch_newest_articles(start_index, no_recommendations)
 
-        if response == None:
-            raise ValueError("No articles found with the given range")
-        
-        self.generate_image_urls(response.data)
-        return {"news": response.data}
+        self.generate_image_urls(response_data)
+        return {"news": response_data}
