@@ -2,7 +2,7 @@ import pandas as pd
 import torch
 import hashlib
 from fastapi import HTTPException
-from Collaborative_Filtering.Depcrecated.PyTorch_Prototype.newsmf_model import NewsMF
+from collaborative_filtering.deprecated.pytorch_prototype.newsmf_model import NewsMF
 import numpy as np  # Import NumPy
 
 # Function to load data

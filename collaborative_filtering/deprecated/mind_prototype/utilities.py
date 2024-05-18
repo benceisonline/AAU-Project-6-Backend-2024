@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 import torch
 import pandas as pd
-from Collaborative_Filtering.Depcrecated.PyTorch_Prototype.newsmf_model import NewsMF  # Assuming 'newsmf_model' is the correct filename
+from collaborative_filtering.deprecated.pytorch_prototype.newsmf_model import NewsMF  # Assuming 'newsmf_model' is the correct filename
 
 def load_data():
     # Load news data

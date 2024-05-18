@@ -2,7 +2,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
-from Collaborative_Filtering.Depcrecated.MIND_Prototype.utilities import load_data, initialize_model, make_predictions
+from collaborative_filtering.deprecated.mind_prototype.utilities import load_data, initialize_model, make_predictions
 
 app = FastAPI()
 
