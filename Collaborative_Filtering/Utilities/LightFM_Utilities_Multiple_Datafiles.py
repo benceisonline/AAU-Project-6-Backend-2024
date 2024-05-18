@@ -1,4 +1,6 @@
 # USE THIS UTILITY FILE WHEN WORKING WITH PRE-SPLIT TRAINING AND TESTING DATA
+# Feel free to replace operations with supabase_utils with your own data fetching methods
+# Tests should be identical to single datafile utility file - or better <3
 
 import pandas as pd
 import numpy as np
@@ -74,7 +76,7 @@ class RecommenderSystem:
     
     # Load half trained model from joblib file for retrain testing
     def load_half_trained_model(self):
-        self.model = joblib.load("Saved_Model/lightfm_model_multi_file_half.joblib")
+        self.model = joblib.load("saved_models/lightfm_model_multi_file_half.joblib")
 
     # Load half of the training data for retrain testing
     def load_half_data(self):

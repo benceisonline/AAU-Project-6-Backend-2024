@@ -9,11 +9,11 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Now import modules from project root directory
-from Utilities.LightFM_Utilities_Single_Datafile import RecommenderSystem, Request
+from utilities.lightfm_utilities_single_datafile import RecommenderSystem, Request
 
 # Define test data paths
 DATA_PATH = "exported_data/combined_data_small.csv"
-MODEL_FOLDER_PATH = "Saved_Model/"
+MODEL_FOLDER_PATH = "saved_models/"
 MODEL_ID = "lightfm_model_combined_data_small"
 
 @pytest.fixture

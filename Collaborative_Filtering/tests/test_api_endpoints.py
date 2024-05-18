@@ -5,7 +5,7 @@
 import pytest
 import requests
 
-API_BASE_URL = "http://172.30.252.112:8000"
+API_BASE_URL = "http://192.168.1.79:8000"
 
 def test_predict_endpoint():
     # Test case for /predict endpoint

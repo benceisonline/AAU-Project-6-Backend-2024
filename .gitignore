@@ -1,6 +1,8 @@
 .DS_Store
 Collaborative_Filtering/__pycache__
+Collaborative_Filtering/.pytest_cache
 Collaborative_Filtering/exported_data
 Collaborative_Filtering/tests/__pycache__
 Collaborative_Filtering/tests/.pytest_cache
+Collaborative_Filtering/utilities/__pycache__
 .env

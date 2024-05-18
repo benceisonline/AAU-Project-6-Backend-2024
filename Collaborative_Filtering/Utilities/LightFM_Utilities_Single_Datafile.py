@@ -94,7 +94,7 @@ class RecommenderSystem:
                  learning_rate=LEARNING_RATE,
                  random_state=np.random.RandomState(SEED))
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
-        joblib.dump(self.model, 'Saved_Model/lightfm_model_retrained.joblib')
+        joblib.dump(self.model, 'saved_models/lightfm_model_retrained.joblib')
 
     # Get AUC score for the model
     def get_validation_AUC_score(self, num_threads=1):
