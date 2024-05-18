@@ -9,7 +9,7 @@ import pandas as pd
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 # Now import modules from project root directory
-from supabase_utils import fetch_data_from_supabase, fetch_articles, fetch_newest_articles
+from utilities.supabase_utils import fetch_data_from_supabase, fetch_articles, fetch_newest_articles
 
 # Mock data for testing
 mock_supabase_response = {
@@ -21,7 +21,7 @@ mock_supabase_response = {
 
 @pytest.fixture
 def supabase_mock():
-    with patch('supabase_utils.supabase') as mock_supabase:
+    with patch('utilities.supabase_utils.supabase') as mock_supabase:
         yield mock_supabase
 
 def test_fetch_data_from_supabase(supabase_mock):

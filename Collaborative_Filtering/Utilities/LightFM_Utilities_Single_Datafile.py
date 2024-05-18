@@ -8,7 +8,7 @@ from lightfm import cross_validation
 from lightfm.evaluation import auc_score
 import joblib
 import os
-from supabase_utils import fetch_data_from_supabase, fetch_articles
+from utilities.supabase_utils import fetch_data_from_supabase, fetch_articles
 
 # This version of the RecommenderSystem works with a single data file
 class RecommenderSystem:

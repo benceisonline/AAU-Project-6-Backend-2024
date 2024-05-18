@@ -9,7 +9,7 @@ from lightfm.data import Dataset
 from lightfm.evaluation import auc_score
 import joblib
 import os
-from supabase_utils import supabase
+from utilities.supabase_utils import supabase
 
 # This version of the RecommenderSystem works with seperate train and test data files
 class RecommenderSystem:
@@ -102,7 +102,7 @@ class RecommenderSystem:
     def retrain(self, epochs):
         self.load_data()
         self.model.fit(interactions=self.train_interactions, epochs=epochs);
-        joblib.dump(self.model, 'Saved_Model/lightfm_model_retrained.joblib')
+        joblib.dump(self.model, 'saved_models/lightfm_model_retrained.joblib')
 
     # Get AUC score for the model
     def get_validation_AUC_score(self, num_threads=1):
@@ -129,8 +129,8 @@ class Request:
 if __name__ == "__main__":
     train_data_path = "exported_data/train_data.csv"
     test_data_path = "exported_data/valid_data.csv"
-    model_path = "Saved_Model/lightfm_multi_file.joblib"
-    news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
+    model_path = "saved_models/lightfm_multi_file.joblib"
+    news_data = pd.read_parquet(".ebnerd_data/ebnerd_small/articles.parquet")
     request = Request(user_id = 136336, start_index = 1, no_recommendations = 10)
 
     recommender_system = RecommenderSystem(train_data_path, test_data_path, model_path)
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     recommender_system.get_validation_AUC_score() # Get AUC score for half trained model
 
-    #predictions_df = recommender_system.make_predictions_for_user(request, news_data)
+    #predictions_df = recommender_system.make_predictions_for_user(request)
     #print(predictions_df)
 
     # Partial fit with other half of the training data, should result in fully trained model

@@ -18,7 +18,7 @@ MODEL_ID = "lightfm_model_combined_data_small"
 
 @pytest.fixture
 def recommender_system():
-    # Initialize RecommenderSystem and load the model
+    # Initialize RecommenderSystem
     recommender_system = RecommenderSystem(DATA_PATH, MODEL_FOLDER_PATH)
     return recommender_system
 
