@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-from utilities.lightfm_utilities_single_datafile import RecommenderSystem
-from utilities.lightfm_news_utilities import NewsTools
+from api_utilities.lightfm_utilities_single_datafile import RecommenderSystem
+from api_utilities.lightfm_news_utilities import NewsTools
 import pandas as pd
 
 app = FastAPI()
 
-url = "192.168.1.79"
+url = "172.30.252.112"
 
 news_data = pd.read_parquet("./ebnerd_data/ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)

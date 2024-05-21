@@ -9,7 +9,7 @@ from lightfm.data import Dataset
 from lightfm.evaluation import auc_score
 import joblib
 import os
-from utilities.supabase_utils import supabase
+from api_utilities.supabase_utils import supabase
 
 # This version of the RecommenderSystem works with seperate train and test data files
 class RecommenderSystem:

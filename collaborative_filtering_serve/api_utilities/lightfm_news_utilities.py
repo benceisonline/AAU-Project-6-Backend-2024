@@ -1,7 +1,7 @@
 import hashlib
 import pandas as pd
 import numpy as np
-from utilities.supabase_utils import fetch_newest_articles
+from api_utilities.supabase_utils import fetch_newest_articles
 
 class NewsTools:
     def __init__(self, data):
