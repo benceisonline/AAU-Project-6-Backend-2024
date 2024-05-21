@@ -7,7 +7,7 @@ import pandas as pd
 
 app = FastAPI()
 
-url = "192.168.1.79"
+url = "172.30.252.112"
 
 news_data = pd.read_parquet("./ebnerd_data/ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)
