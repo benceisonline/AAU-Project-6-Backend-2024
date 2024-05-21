@@ -24,13 +24,13 @@ conda activate ml
 pip install -r requirements.txt
 ```
 
-## Step 4: Local host the API
+## Step 4: Host the API
 Update IP to your local IP address and run model serving API
 ```bash
-python LightFM_API.py
+python lightfm_api.py
 ```
 
-## Step 5: Test API Endpoints 
+## Step 5: Test API Endpoints
 Go to Postman GUI and make a new request for `0.0.0.0:8080`
 - GET Request: `/{endpoint}`
 - POST Request: `/{endpoint}?{parameter_name}={data}`

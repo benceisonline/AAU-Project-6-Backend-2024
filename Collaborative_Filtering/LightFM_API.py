@@ -1,23 +1,19 @@
-# main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-from NewsItem import NewsItem
-from LightFM_Utilities_Single_Datafile import RecommenderSystem
-from LightFM_News_Utilities import NewsTools
+from utilities.lightfm_utilities_single_datafile import RecommenderSystem
+from utilities.lightfm_news_utilities import NewsTools
 import pandas as pd
 
 app = FastAPI()
 
 url = "192.168.1.79"
 
-news_data = pd.read_parquet("./ebnerd_small/articles.parquet")
+news_data = pd.read_parquet("./ebnerd_data/ebnerd_small/articles.parquet")
 news_tools = NewsTools(news_data)
 
-train_data_path = "exported_data/train_data.csv"
-test_data_path = "exported_data/valid_data.csv"
 data_path = "exported_data/combined_data_small.csv"
-models_folder_path = "Saved_Model/"
+models_folder_path = "saved_models/"
 model_id = "lightfm_model_multi_file"
 
 recommender_system = RecommenderSystem(data_path, models_folder_path)
