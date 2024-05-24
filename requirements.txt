@@ -6,4 +6,8 @@ pytorch_lightning
 pydantic
 fastapi
 uvicorn
-flake8
+lightfm
+joblib
+supabase
+python-dotenv
+pytest

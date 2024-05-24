@@ -1,2 +1,9 @@
 .DS_Store
-Collaborative_Filtering/__pycache__
+__pycache__
+collaborative_filtering_serve/__pycache__
+collaborative_filtering_serve/.pytest_cache
+collaborative_filtering_serve/exported_data
+collaborative_filtering_serve/tests/__pycache__
+collaborative_filtering_serve/tests/.pytest_cache
+collaborative_filtering_serve/utilities/__pycache__
+.env
