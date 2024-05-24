@@ -2,8 +2,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import uvicorn
-from collaborative_filtering.schemas.news_item import NewsItem
-from collaborative_filtering.deprecated.pytorch_prototype.EBNERD_utilities import load_data, initialize_model, make_predictions, get_newest_news
+from collaborative_filtering_serve.schemas.news_item import NewsItem
+from collaborative_filtering_serve.deprecated.pytorch_prototype.EBNERD_utilities import load_data, initialize_model, make_predictions, get_newest_news
 
 app = FastAPI()
 
