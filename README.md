@@ -30,7 +30,7 @@ Update IP to your local IP address and run model serving API
 python lightfm_api.py
 ```
 
-## Step 5: Test API Endpoints
+## Step 5: Manually test API Endpoints (or just run tests)
 Go to Postman GUI and make a new request for `0.0.0.0:8080`
 - GET Request: `/{endpoint}`
 - POST Request: `/{endpoint}?{parameter_name}={data}`
